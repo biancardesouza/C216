@@ -11,7 +11,7 @@ help:
 	@echo   help     Mostra esta mensagem
 	@echo   install  Instala as dependencias com o poetry
 	@echo   run      Sobe a API em http://$(HOST):$(PORT)
-	@echo   test     Verifica a compilacao do backend
+	@echo   test     Executa os testes automatizados com Pytest
 	@echo   docker-build  Constroi a imagem do backend
 	@echo   up       Sobe o backend e o banco com Docker Compose
 	@echo   down     Para os servicos do Docker Compose
@@ -25,7 +25,7 @@ run:
 	cd $(BACKEND_DIR) && $(POETRY) run uvicorn $(APP) --host $(HOST) --port $(PORT) --reload
 
 test:
-	cd $(BACKEND_DIR) && $(PYTHON) -m compileall -q app
+	cd $(BACKEND_DIR) && $(POETRY) run pytest
 
 docker-build:
 	docker compose build backend
