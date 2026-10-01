@@ -10,8 +10,13 @@ on:
 
 jobs:
   test:
-    name: Testes (Pytest)
+    name: Testes ${{ matrix.suite }} (Pytest)
     runs-on: ubuntu-latest
+
+    strategy:
+      fail-fast: false
+      matrix:
+        suite: [unit, integration]
 
     defaults:
       run:
@@ -38,5 +43,5 @@ jobs:
       - name: Instalar dependências
         run: poetry install --no-root
 
-      - name: Executar Pytest
-        run: poetry run pytest -v
+      - name: Executar testes (${{ matrix.suite }})
+        run: poetry run pytest -v -m ${{ matrix.suite }}
