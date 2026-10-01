@@ -22,8 +22,12 @@ package-mode = false
 [dependency-groups]
 dev = [
     "pytest (>=9.1.1,<10.0.0)",
-    "httpx (>=0.28.1,<0.29.0)"
+    "httpx2 (>=2.13.1,<3.0.0)",
 ]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+markers = [
+    "unit: testes unitários (sem HTTP, isolam uma única camada)",
+    "integration: testes de integração (requisições HTTP via TestClient)",
+]
