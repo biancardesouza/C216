@@ -6,7 +6,8 @@ TESTS_DIR = Path(__file__).parent
 
 
 def pytest_collection_modifyitems(items):
-    # Marca cada teste de acordo com a pasta em que está (tests/unit ou tests/integration).
+    # Marca cada teste de acordo com a pasta em que está
+    # (tests/unit ou tests/integration).
     # Testes fora dessas pastas não seriam executados pelo CI, então são rejeitados.
     for item in items:
         test_type = Path(item.fspath).relative_to(TESTS_DIR).parts[0]

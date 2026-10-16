@@ -1,5 +1,7 @@
 import pytest
 
+from app.models.tarefa import TarefaModel
+
 
 # GET /tarefas
 def test_list_tarefas_empty(client):
@@ -140,3 +142,15 @@ def test_delete_tarefa_not_found(client):
     response = client.delete("/tarefas/999")
 
     assert response.status_code == 404
+
+
+# Persistência
+def test_created_tarefa_is_stored_in_database(client, session_factory):
+    tarefa = client.post("/tarefas", json={"titulo": "Persistida"}).json()
+
+    # Uma sessão independente da requisição encontra a tarefa direto no banco.
+    with session_factory() as session:
+        stored = session.get(TarefaModel, tarefa["id"])
+
+    assert stored is not None
+    assert stored.titulo == "Persistida"
