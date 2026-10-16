@@ -5,7 +5,8 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DATABASE_URL: postgresql://c216:c216@db:5432/c216
+      DATABASE_URL: postgresql+psycopg://c216:c216@db:5432/c216
+    restart: unless-stopped
     depends_on:
       db:
         condition: service_healthy
@@ -17,7 +18,8 @@ services:
       POSTGRES_PASSWORD: c216
       POSTGRES_DB: c216
     ports:
-      - "5432:5432"
+      # Porta do host configurável (DB_PORT) caso a 5432 já esteja em uso.
+      - "${DB_PORT:-5432}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:

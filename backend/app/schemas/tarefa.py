@@ -32,4 +32,7 @@ class TarefaPatch(BaseModel):
 
 
 class Tarefa(TarefaBase):
+    # Permite montar a resposta a partir do modelo ORM (TarefaModel).
+    model_config = ConfigDict(from_attributes=True)
+
     id: int

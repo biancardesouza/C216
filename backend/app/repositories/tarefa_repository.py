@@ -1,44 +1,38 @@
-from app.schemas.tarefa import Tarefa, TarefaCreate, TarefaPatch, TarefaUpdate
+from sqlalchemy import select
+from sqlalchemy.orm import Session
+
+from app.models.tarefa import TarefaModel
 
 
 class TarefaRepository:
-    """Repositório em memória para o recurso Tarefa."""
+    """Acesso aos dados de Tarefa no PostgreSQL via SQLAlchemy.
 
-    def __init__(self) -> None:
-        self._tarefas: dict[int, Tarefa] = {}
-        self._next_id = 1
+    Só conhece o modelo ORM e a sessão: não lida com HTTP nem com schemas Pydantic.
+    """
+
+    def __init__(self, session: Session) -> None:
+        self.session = session
 
     def list(
         self, concluida: bool | None = None, offset: int = 0, limit: int = 10
-    ) -> list[Tarefa]:
-        tarefas = list(self._tarefas.values())
+    ) -> list[TarefaModel]:
+        query = select(TarefaModel).order_by(TarefaModel.id)
         if concluida is not None:
-            tarefas = [tarefa for tarefa in tarefas if tarefa.concluida == concluida]
-        return tarefas[offset : offset + limit]
+            query = query.where(TarefaModel.concluida == concluida)
+        return list(self.session.scalars(query.offset(offset).limit(limit)))
 
-    def get(self, tarefa_id: int) -> Tarefa | None:
-        return self._tarefas.get(tarefa_id)
+    def get(self, tarefa_id: int) -> TarefaModel | None:
+        return self.session.get(TarefaModel, tarefa_id)
 
-    def create(self, data: TarefaCreate) -> Tarefa:
-        tarefa = Tarefa(id=self._next_id, **data.model_dump())
-        self._tarefas[tarefa.id] = tarefa
-        self._next_id += 1
+    def add(self, tarefa: TarefaModel) -> TarefaModel:
+        self.session.add(tarefa)
+        return self.save(tarefa)
+
+    def save(self, tarefa: TarefaModel) -> TarefaModel:
+        self.session.commit()
+        self.session.refresh(tarefa)
         return tarefa
 
-    def replace(self, tarefa_id: int, data: TarefaUpdate) -> Tarefa | None:
-        if tarefa_id not in self._tarefas:
-            return None
-        tarefa = Tarefa(id=tarefa_id, **data.model_dump())
-        self._tarefas[tarefa_id] = tarefa
-        return tarefa
-
-    def update(self, tarefa_id: int, data: TarefaPatch) -> Tarefa | None:
-        tarefa = self._tarefas.get(tarefa_id)
-        if tarefa is None:
-            return None
-        updated = tarefa.model_copy(update=data.model_dump(exclude_unset=True))
-        self._tarefas[tarefa_id] = updated
-        return updated
-
-    def delete(self, tarefa_id: int) -> bool:
-        return self._tarefas.pop(tarefa_id, None) is not None
+    def delete(self, tarefa: TarefaModel) -> None:
+        self.session.delete(tarefa)
+        self.session.commit()
