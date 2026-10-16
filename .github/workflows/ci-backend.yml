@@ -9,6 +9,41 @@ on:
       - "**"
 
 jobs:
+  lint:
+    name: Lint (Ruff)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout do código
+        uses: actions/checkout@v4
+
+      - name: Configurar Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Instalar Poetry
+        run: pip install poetry==2.4.1
+
+      - name: Cachear dependências do Poetry
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-${{ hashFiles('backend/poetry.lock') }}
+
+      - name: Instalar dependências
+        run: poetry install --no-root
+
+      - name: Verificar lint
+        run: poetry run ruff check .
+
+      - name: Verificar formatação
+        run: poetry run ruff format --check .
+
   test:
     name: Testes ${{ matrix.suite }} (Pytest)
     runs-on: ubuntu-latest
@@ -17,6 +52,25 @@ jobs:
       fail-fast: false
       matrix:
         suite: [unit, integration]
+
+    # PostgreSQL usado pelos testes de integração (os unitários não acessam o banco).
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: c216
+          POSTGRES_PASSWORD: c216
+          POSTGRES_DB: c216_test
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U c216 -d c216_test"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      TEST_DATABASE_URL: postgresql+psycopg://c216:c216@localhost:5432/c216_test
 
     defaults:
       run:
