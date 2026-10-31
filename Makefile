@@ -1,11 +1,13 @@
 PYTHON      ?= python
 POETRY      ?= poetry
 BACKEND_DIR := backend
+FRONTEND_DIR := frontend
+NPM         ?= npm
 APP         := app.main:app
 HOST        ?= 0.0.0.0
 PORT        ?= 8000
 .DEFAULT_GOAL := help
-.PHONY: help install run format lint test test-unit test-integration db migrate migration docker-build up up-build down logs clean
+.PHONY: help install run format lint test test-unit test-integration db migrate migration docker-build up up-build down logs clean front-install front-dev front-lint front-format front-test front-build front-e2e check-all
 help:
 	@echo Alvos disponiveis:
 	@echo   help     Mostra esta mensagem
@@ -25,6 +27,14 @@ help:
 	@echo   down     Para os servicos do Docker Compose
 	@echo   logs     Exibe os logs do backend
 	@echo   clean    Para os servicos e remove os volumes
+	@echo   front-install  Instala as dependencias do frontend com npm ci
+	@echo   front-dev      Sobe o frontend em modo de desenvolvimento
+	@echo   front-lint     Verifica lint e formatacao do frontend com o Biome
+	@echo   front-format   Formata o codigo do frontend com o Biome
+	@echo   front-test     Executa os testes unitarios e de integracao do frontend
+	@echo   front-build    Gera o build de producao do frontend
+	@echo   front-e2e      Executa os testes E2E do frontend com o Playwright
+	@echo   check-all      Executa todo o checklist do frontend: install, lint, format, test, build e e2e
 
 install:
 	cd $(BACKEND_DIR) && $(POETRY) install
@@ -73,3 +83,26 @@ logs:
 
 clean:
 	docker compose down --volumes --remove-orphans
+
+front-install:
+	cd $(FRONTEND_DIR) && $(NPM) ci
+
+front-dev:
+	cd $(FRONTEND_DIR) && $(NPM) run dev
+
+front-lint:
+	cd $(FRONTEND_DIR) && $(NPM) run lint && $(NPM) run format:check
+
+front-format:
+	cd $(FRONTEND_DIR) && $(NPM) run format
+
+front-test:
+	cd $(FRONTEND_DIR) && $(NPM) test
+
+front-build:
+	cd $(FRONTEND_DIR) && $(NPM) run build
+
+front-e2e:
+	cd $(FRONTEND_DIR) && $(NPM) run test:e2e
+
+check-all: front-install front-lint front-test front-build front-e2e
