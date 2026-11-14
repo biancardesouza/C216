@@ -6,8 +6,21 @@ NPM         ?= npm
 APP         := app.main:app
 HOST        ?= 0.0.0.0
 PORT        ?= 8000
+
+# Stack isolada usada pelos testes E2E: outro nome de projeto e outras portas,
+# para não conflitar com o ambiente de desenvolvimento (make up).
+E2E_PROJECT       := lab-e2e
+E2E_COMPOSE       := docker compose -p $(E2E_PROJECT)
+E2E_API_PORT      := 18000
+E2E_FRONTEND_PORT := 15173
+E2E_DB_PORT       := 55432
+
 .DEFAULT_GOAL := help
-.PHONY: help install run format lint test test-unit test-integration db migrate migration docker-build up up-build down logs clean front-install front-dev front-lint front-format front-test front-build front-e2e check-all
+.PHONY: help install run format lint test test-unit test-integration db migrate migration \
+	docker-build up up-build ps down logs clean db-upgrade db-current \
+	frontend-install frontend-dev frontend-check frontend-format frontend-test frontend-build \
+	e2e e2e-up e2e-run e2e-down check-all
+
 help:
 	@echo Alvos disponiveis:
 	@echo   help     Mostra esta mensagem
@@ -21,20 +34,23 @@ help:
 	@echo   db       Sobe apenas o PostgreSQL com Docker Compose
 	@echo   migrate  Aplica as migrations no banco local
 	@echo   migration  Gera uma migration a partir dos modelos. Uso: make migration m=mensagem
-	@echo   docker-build  Constroi a imagem do backend
-	@echo   up       Sobe o backend e o banco com Docker Compose
-	@echo   up-build Reconstroi a imagem e sobe o backend e o banco
+	@echo   docker-build  Constroi as imagens da api e do frontend
+	@echo   up       Sobe db, api e frontend com Docker Compose
+	@echo   up-build Reconstroi as imagens e sobe db, api e frontend
+	@echo   ps       Mostra o estado dos servicos do Docker Compose
 	@echo   down     Para os servicos do Docker Compose
-	@echo   logs     Exibe os logs do backend
+	@echo   logs     Exibe os logs da api e do frontend
 	@echo   clean    Para os servicos e remove os volumes
-	@echo   front-install  Instala as dependencias do frontend com npm ci
-	@echo   front-dev      Sobe o frontend em modo de desenvolvimento
-	@echo   front-lint     Verifica lint e formatacao do frontend com o Biome
-	@echo   front-format   Formata o codigo do frontend com o Biome
-	@echo   front-test     Executa os testes unitarios e de integracao do frontend
-	@echo   front-build    Gera o build de producao do frontend
-	@echo   front-e2e      Executa os testes E2E do frontend com o Playwright
-	@echo   check-all      Executa todo o checklist do frontend: install, lint, format, test, build e e2e
+	@echo   db-upgrade  Aplica as migrations no banco do container da api
+	@echo   db-current  Mostra a revisao atual do banco do container da api
+	@echo   frontend-install  Instala as dependencias do frontend com npm ci
+	@echo   frontend-dev      Sobe o frontend em modo de desenvolvimento
+	@echo   frontend-check    Verifica lint e formatacao do frontend com o Biome
+	@echo   frontend-format   Formata o codigo do frontend com o Biome
+	@echo   frontend-test     Executa os testes unitarios e de integracao do frontend
+	@echo   frontend-build    Gera o build de producao do frontend
+	@echo   e2e      Sobe a stack $(E2E_PROJECT), executa os testes E2E e remove os containers
+	@echo   check-all  Executa o checklist completo: backend, frontend e E2E
 
 install:
 	cd $(BACKEND_DIR) && $(POETRY) install
@@ -67,42 +83,72 @@ migration: db
 	cd $(BACKEND_DIR) && $(POETRY) run alembic revision --autogenerate -m "$(m)"
 
 docker-build:
-	docker compose build backend
+	docker compose build api frontend
 
 up:
-	docker compose up -d
+	docker compose up -d --wait
 
 up-build:
-	docker compose up -d --build
+	docker compose up -d --build --wait
+
+ps:
+	docker compose ps
 
 down:
 	docker compose down
 
 logs:
-	docker compose logs -f backend
+	docker compose logs -f api frontend
 
 clean:
 	docker compose down --volumes --remove-orphans
 
-front-install:
+db-upgrade:
+	docker compose exec api alembic upgrade head
+
+db-current:
+	docker compose exec api alembic current
+
+frontend-install:
 	cd $(FRONTEND_DIR) && $(NPM) ci
 
-front-dev:
+frontend-dev:
 	cd $(FRONTEND_DIR) && $(NPM) run dev
 
-front-lint:
+frontend-check:
 	cd $(FRONTEND_DIR) && $(NPM) run lint && $(NPM) run format:check
 
-front-format:
+frontend-format:
 	cd $(FRONTEND_DIR) && $(NPM) run format
 
-front-test:
+frontend-test:
 	cd $(FRONTEND_DIR) && $(NPM) test
 
-front-build:
+frontend-build:
 	cd $(FRONTEND_DIR) && $(NPM) run build
 
-front-e2e:
+# Variáveis lidas pelo compose.yml e pelo playwright.config.js durante o E2E.
+e2e e2e-up e2e-run e2e-down: export API_PORT := $(E2E_API_PORT)
+e2e e2e-up e2e-run e2e-down: export FRONTEND_PORT := $(E2E_FRONTEND_PORT)
+e2e e2e-up e2e-run e2e-down: export DB_PORT := $(E2E_DB_PORT)
+e2e e2e-up e2e-run e2e-down: export VITE_API_URL := http://localhost:$(E2E_API_PORT)
+e2e e2e-up e2e-run e2e-down: export CORS_ORIGINS := http://localhost:$(E2E_FRONTEND_PORT)
+e2e e2e-up e2e-run e2e-down: export E2E_BASE_URL := http://localhost:$(E2E_FRONTEND_PORT)
+e2e e2e-up e2e-run e2e-down: export E2E_API_URL := http://localhost:$(E2E_API_PORT)
+
+# Remove a stack mesmo quando a subida ou os testes falham, sem deixar containers ativos.
+e2e:
+	$(MAKE) e2e-up || ($(MAKE) e2e-down && exit 1)
+	$(MAKE) e2e-run || ($(MAKE) e2e-down && exit 1)
+	$(MAKE) e2e-down
+
+e2e-up:
+	$(E2E_COMPOSE) up -d --build --wait
+
+e2e-run:
 	cd $(FRONTEND_DIR) && $(NPM) run test:e2e
 
-check-all: front-install front-lint front-test front-build front-e2e
+e2e-down:
+	$(E2E_COMPOSE) down --volumes --remove-orphans
+
+check-all: lint test frontend-install frontend-check frontend-test frontend-build e2e
