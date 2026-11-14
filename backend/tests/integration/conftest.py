@@ -57,7 +57,7 @@ def session_factory(engine):
     yield sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
     # Limpa os dados (e reinicia os ids) para que cada teste comece com o banco vazio.
     with engine.begin() as connection:
-        connection.execute(text("TRUNCATE TABLE tarefas RESTART IDENTITY"))
+        connection.execute(text("TRUNCATE TABLE tarefas, items RESTART IDENTITY"))
 
 
 @pytest.fixture
