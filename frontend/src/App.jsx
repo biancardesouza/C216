@@ -3,22 +3,32 @@ import { ItemForm } from "./components/ItemForm";
 import { ItemList } from "./components/ItemList";
 import { useItens } from "./hooks/useItens";
 
-export default function App({ itensIniciais = [] }) {
-  const { itens, adicionar, atualizar, remover } = useItens(itensIniciais);
+export default function App() {
+  const {
+    itens,
+    carregando,
+    erroCarregamento,
+    erroRemocao,
+    recarregar,
+    adicionar,
+    atualizar,
+    remover,
+  } = useItens();
   const [itemEmEdicao, setItemEmEdicao] = useState(null);
 
-  function handleSalvar(dados) {
+  // Se a API recusar, o erro sobe para o ItemForm, que o exibe e mantém os campos.
+  async function handleSalvar(dados) {
     if (itemEmEdicao) {
-      atualizar(itemEmEdicao.id, dados);
+      await atualizar(itemEmEdicao.id, dados);
       setItemEmEdicao(null);
     } else {
-      adicionar(dados);
+      await adicionar(dados);
     }
   }
 
-  function handleRemover(item) {
-    remover(item.id);
-    if (itemEmEdicao?.id === item.id) setItemEmEdicao(null);
+  async function handleRemover(item) {
+    const removido = await remover(item.id);
+    if (removido && itemEmEdicao?.id === item.id) setItemEmEdicao(null);
   }
 
   return (
@@ -45,6 +55,10 @@ export default function App({ itensIniciais = [] }) {
         </div>
         <ItemList
           itens={itens}
+          carregando={carregando}
+          erroCarregamento={erroCarregamento}
+          erroRemocao={erroRemocao}
+          onRecarregar={recarregar}
           idEmEdicao={itemEmEdicao?.id ?? null}
           onEditar={setItemEmEdicao}
           onRemover={handleRemover}
