@@ -1,0 +1,44 @@
+[project]
+name = "estoque-api"
+version = "0.1.0"
+description = "API do sistema de controle de estoque (Projeto Final de C216)."
+authors = [
+    {name = "Bianca Souza"}
+]
+requires-python = ">=3.12,<4.0"
+dependencies = [
+    "fastapi (>=0.141.1,<0.142.0)",
+    "uvicorn[standard] (>=0.52.4,<0.53.0)",
+    "pydantic-settings (>=2.16.0,<2.17.0)"
+]
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.poetry]
+package-mode = false
+
+[dependency-groups]
+dev = [
+    "pytest (>=9.1.1,<10.0.0)",
+    "httpx2 (>=2.13.1,<3.0.0)",
+    "ruff (>=0.17.1,<0.18.0)",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+    "unit: testes de uma única camada, sem HTTP nem banco",
+    "integration: testes que passam pela API e/ou pelo PostgreSQL",
+]
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B"]
+
+[tool.ruff.lint.flake8-bugbear]
+extend-immutable-calls = ["fastapi.Depends", "fastapi.Query", "fastapi.Path"]
