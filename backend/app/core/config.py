@@ -8,6 +8,8 @@ class Settings(BaseSettings):
 
     app_name: str = "Estoque API"
     app_version: str = "0.1.0"
+    # Padrão para desenvolvimento local, com o PostgreSQL do Docker Compose.
+    database_url: str = "postgresql+psycopg://estoque:estoque@localhost:5432/estoque"
 
 
 settings = Settings()
