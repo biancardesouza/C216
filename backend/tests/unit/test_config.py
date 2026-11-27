@@ -17,3 +17,12 @@ def test_settings_le_variaveis_de_ambiente(monkeypatch):
 
     assert config.app_name == "Outro Nome"
     assert config.database_url == "postgresql+psycopg://u:s@host:5432/banco"
+
+
+def test_cors_origins_vira_lista_limpa():
+    config = Settings(
+        _env_file=None,
+        cors_origins=" http://localhost:5173/ , http://exemplo.com,, ",
+    )
+
+    assert config.cors_origins_list == ["http://localhost:5173", "http://exemplo.com"]
