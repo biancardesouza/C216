@@ -1,7 +1,4 @@
 import pytest
-from sqlalchemy import update
-
-from app.models import ProdutoModel
 
 NOVO_PRODUTO = {
     "sku": "CAN-001",
@@ -17,14 +14,11 @@ def produto(client):
     return client.post("/produtos", json=NOVO_PRODUTO).json()
 
 
-def _definir_quantidade(session, produto_id, quantidade):
-    # Atalho só para testes: na aplicação, a quantidade muda por movimentação.
-    session.execute(
-        update(ProdutoModel)
-        .where(ProdutoModel.id == produto_id)
-        .values(quantidade=quantidade)
+def _dar_entrada(client, produto_id, quantidade):
+    client.post(
+        f"/produtos/{produto_id}/movimentacoes",
+        json={"tipo": "entrada", "quantidade": quantidade},
     )
-    session.commit()
 
 
 # ---------- POST /produtos ----------
@@ -129,8 +123,8 @@ def test_atualizar_produto(client, produto):
     assert client.get(f"/produtos/{produto['id']}").json()["nome"] == "Caneta preta"
 
 
-def test_atualizar_nao_altera_quantidade(client, produto, session):
-    _definir_quantidade(session, produto["id"], 7)
+def test_atualizar_nao_altera_quantidade(client, produto):
+    _dar_entrada(client, produto["id"], 7)
 
     response = client.put(
         f"/produtos/{produto['id']}", json=NOVO_PRODUTO | {"quantidade": 0}
@@ -173,8 +167,8 @@ def test_excluir_produto_sem_estoque_retorna_204(client, produto):
     assert client.get(f"/produtos/{produto['id']}").status_code == 404
 
 
-def test_excluir_produto_com_estoque_retorna_409(client, produto, session):
-    _definir_quantidade(session, produto["id"], 3)
+def test_excluir_produto_com_estoque_retorna_409(client, produto):
+    _dar_entrada(client, produto["id"], 3)
 
     response = client.delete(f"/produtos/{produto['id']}")
 

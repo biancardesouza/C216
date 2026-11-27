@@ -3,6 +3,7 @@ from fastapi.responses import JSONResponse
 
 from app.services.erros import (
     ErroDeNegocio,
+    EstoqueInsuficienteError,
     ProdutoComEstoqueError,
     ProdutoNaoEncontradoError,
     SkuDuplicadoError,
@@ -13,6 +14,7 @@ STATUS_POR_ERRO: dict[type[ErroDeNegocio], int] = {
     ProdutoNaoEncontradoError: status.HTTP_404_NOT_FOUND,
     SkuDuplicadoError: status.HTTP_409_CONFLICT,
     ProdutoComEstoqueError: status.HTTP_409_CONFLICT,
+    EstoqueInsuficienteError: status.HTTP_409_CONFLICT,
 }
 
 

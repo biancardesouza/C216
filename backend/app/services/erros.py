@@ -22,3 +22,11 @@ class ProdutoComEstoqueError(ErroDeNegocio):
             f"O produto ainda tem {quantidade} unidade(s) em estoque. "
             "Registre a saída antes de excluir."
         )
+
+
+class EstoqueInsuficienteError(ErroDeNegocio):
+    def __init__(self, disponivel: int, solicitado: int):
+        super().__init__(
+            f"Estoque insuficiente: há {disponivel} unidade(s) disponível(is) "
+            f"e a saída pedida foi de {solicitado}."
+        )

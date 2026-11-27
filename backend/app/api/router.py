@@ -1,7 +1,8 @@
 from fastapi import APIRouter
 
-from app.api.routes import health, produtos
+from app.api.routes import health, movimentacoes, produtos
 
 api_router = APIRouter()
 api_router.include_router(health.router)
 api_router.include_router(produtos.router)
+api_router.include_router(movimentacoes.router)
