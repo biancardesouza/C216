@@ -2,7 +2,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import CheckConstraint, DateTime, Numeric, String, func
-from sqlalchemy.orm import Mapped, mapped_column
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database.base import Base
 
@@ -33,4 +33,9 @@ class ProdutoModel(Base):
     )
     atualizado_em: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now(), onupdate=func.now()
+    )
+
+    # passive_deletes deixa o próprio banco apagar o histórico (ON DELETE CASCADE).
+    movimentacoes: Mapped[list["MovimentacaoModel"]] = relationship(  # noqa: F821
+        back_populates="produto", passive_deletes=True
     )

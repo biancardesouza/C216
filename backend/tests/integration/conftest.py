@@ -59,7 +59,7 @@ def session_factory(engine):
     yield sessionmaker(bind=engine, autoflush=False, expire_on_commit=False)
     # Cada teste começa com as tabelas vazias e os ids reiniciados.
     with engine.begin() as conexao:
-        conexao.execute(text("TRUNCATE TABLE produtos RESTART IDENTITY"))
+        conexao.execute(text("TRUNCATE TABLE movimentacoes, produtos RESTART IDENTITY"))
 
 
 @pytest.fixture
