@@ -1,5 +1,5 @@
-import { describe, expect, it } from "vitest";
-import { calcularResumo, formatarMoeda } from "../../src/utils/estoque.js";
+﻿import { describe, expect, it } from "vitest";
+import { calcularResumo, formatarDataHora, formatarMoeda } from "../../src/utils/estoque.js";
 
 // O Intl usa espaço não separável entre "R$" e o valor.
 const semEspacoEspecial = (texto) => texto.replace(/\s/g, " ");
@@ -37,5 +37,13 @@ describe("calcularResumo", () => {
       comEstoqueBaixo: 2,
       valorEmEstoque: 55,
     });
+  });
+});
+
+describe("formatarDataHora", () => {
+  it("formata data e hora no padrão brasileiro", () => {
+    const texto = formatarDataHora("2026-11-27T15:30:00");
+
+    expect(texto).toMatch(/^27\/11\/2026,? 15:30$/);
   });
 });

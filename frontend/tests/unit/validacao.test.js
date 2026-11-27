@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { validarProduto } from "../../src/utils/validacao.js";
+import { validarMovimentacao, validarProduto } from "../../src/utils/validacao.js";
 
 const VALIDO = {
   sku: "CAN-001",
@@ -42,5 +42,35 @@ describe("validarProduto", () => {
     const erros = validarProduto({ ...VALIDO, [campo]: valor });
 
     expect(Object.keys(erros)).toEqual([campo]);
+  });
+});
+
+describe("validarMovimentacao", () => {
+  it("aceita entrada e saída válidas", () => {
+    expect(validarMovimentacao({ tipo: "entrada", quantidade: "10" })).toEqual({});
+    expect(validarMovimentacao({ tipo: "saida", quantidade: "1", observacao: "Venda" })).toEqual(
+      {},
+    );
+  });
+
+  it.each([["0"], ["-3"], ["2,5"], [""], ["abc"], ["100001"]])(
+    "rejeita quantidade %j",
+    (quantidade) => {
+      expect(validarMovimentacao({ tipo: "entrada", quantidade })).toHaveProperty("quantidade");
+    },
+  );
+
+  it("rejeita tipo desconhecido", () => {
+    expect(validarMovimentacao({ tipo: "ajuste", quantidade: "1" })).toHaveProperty("tipo");
+  });
+
+  it("rejeita observação longa demais", () => {
+    const erros = validarMovimentacao({
+      tipo: "entrada",
+      quantidade: "1",
+      observacao: "x".repeat(201),
+    });
+
+    expect(erros).toHaveProperty("observacao");
   });
 });

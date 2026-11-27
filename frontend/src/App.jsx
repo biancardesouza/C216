@@ -1,5 +1,6 @@
 import { useState } from "react";
 import Aviso from "./components/Aviso.jsx";
+import PainelMovimentacoes from "./components/PainelMovimentacoes.jsx";
 import ProdutoForm from "./components/ProdutoForm.jsx";
 import ResumoEstoque from "./components/ResumoEstoque.jsx";
 import TabelaProdutos from "./components/TabelaProdutos.jsx";
@@ -11,12 +12,23 @@ export default function App() {
   const { produtos, carregando, erro, recarregar } = useProdutos();
   const [formulario, setFormulario] = useState(null);
   const [mensagem, setMensagem] = useState(null);
+  // Guarda só o id: o produto vem da lista, então o saldo exibido no painel
+  // se atualiza sozinho quando a lista é recarregada após uma movimentação.
+  const [idMovimentando, setIdMovimentando] = useState(null);
+  const produtoMovimentando = produtos.find((p) => p.id === idMovimentando);
   // Só mostra "Carregando" na primeira busca; nas recargas a tabela fica visível.
   const primeiraCarga = carregando && produtos.length === 0;
 
   function abrirFormulario(produto = null) {
     setMensagem(null);
+    setIdMovimentando(null);
     setFormulario({ produto });
+  }
+
+  function abrirMovimentacoes(produto) {
+    setMensagem(null);
+    setFormulario(null);
+    setIdMovimentando(produto.id);
   }
 
   async function salvar(valores) {
@@ -76,6 +88,15 @@ export default function App() {
           />
         )}
 
+        {produtoMovimentando && (
+          <PainelMovimentacoes
+            key={produtoMovimentando.id}
+            produto={produtoMovimentando}
+            onRegistrada={recarregar}
+            onFechar={() => setIdMovimentando(null)}
+          />
+        )}
+
         {primeiraCarga && <Aviso>Carregando produtos...</Aviso>}
 
         {erro && (
@@ -98,7 +119,12 @@ export default function App() {
         {!primeiraCarga && !erro && (
           <>
             <ResumoEstoque produtos={produtos} />
-            <TabelaProdutos produtos={produtos} onEditar={abrirFormulario} onExcluir={excluir} />
+            <TabelaProdutos
+              produtos={produtos}
+              onMovimentar={abrirMovimentacoes}
+              onEditar={abrirFormulario}
+              onExcluir={excluir}
+            />
           </>
         )}
       </main>

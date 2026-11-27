@@ -27,3 +27,20 @@ export function validarProduto({ sku, nome, categoria, preco, estoque_minimo }) 
 
   return erros;
 }
+
+export function validarMovimentacao({ tipo, quantidade, observacao = "" }) {
+  const erros = {};
+
+  if (tipo !== "entrada" && tipo !== "saida") {
+    erros.tipo = "Escolha entrada ou saída.";
+  }
+  const texto = String(quantidade).trim();
+  if (!/^\d+$/.test(texto) || Number(texto) < 1 || Number(texto) > 100000) {
+    erros.quantidade = "Informe uma quantidade inteira entre 1 e 100.000.";
+  }
+  if (observacao.trim().length > 200) {
+    erros.observacao = "A observação pode ter no máximo 200 caracteres.";
+  }
+
+  return erros;
+}

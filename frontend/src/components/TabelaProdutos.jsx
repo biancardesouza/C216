@@ -18,7 +18,7 @@ function SituacaoEstoque({ produto }) {
 
 const BOTAO = "rounded-md px-2 py-1 text-xs font-medium";
 
-function Acoes({ produto, onEditar, onExcluir }) {
+function Acoes({ produto, onMovimentar, onEditar, onExcluir }) {
   // A exclusão pede confirmação na própria linha, sem janelas do navegador.
   const [confirmando, setConfirmando] = useState(false);
 
@@ -51,6 +51,14 @@ function Acoes({ produto, onEditar, onExcluir }) {
     <div className="flex justify-end gap-1">
       <button
         type="button"
+        onClick={() => onMovimentar(produto)}
+        aria-label={`Movimentar ${produto.nome}`}
+        className={`${BOTAO} bg-slate-800 text-white hover:bg-slate-700`}
+      >
+        Movimentar
+      </button>
+      <button
+        type="button"
         onClick={() => onEditar(produto)}
         aria-label={`Editar ${produto.nome}`}
         className={`${BOTAO} border border-slate-300 hover:bg-slate-50`}
@@ -69,7 +77,7 @@ function Acoes({ produto, onEditar, onExcluir }) {
   );
 }
 
-export default function TabelaProdutos({ produtos, onEditar, onExcluir }) {
+export default function TabelaProdutos({ produtos, onMovimentar, onEditar, onExcluir }) {
   if (produtos.length === 0) {
     return (
       <p className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
@@ -106,7 +114,12 @@ export default function TabelaProdutos({ produtos, onEditar, onExcluir }) {
                 <SituacaoEstoque produto={produto} />
               </td>
               <td className="px-4 py-3">
-                <Acoes produto={produto} onEditar={onEditar} onExcluir={onExcluir} />
+                <Acoes
+                  produto={produto}
+                  onMovimentar={onMovimentar}
+                  onEditar={onEditar}
+                  onExcluir={onExcluir}
+                />
               </td>
             </tr>
           ))}
