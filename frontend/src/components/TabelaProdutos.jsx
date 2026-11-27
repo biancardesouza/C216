@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { formatarMoeda } from "../utils/estoque.js";
 
 function SituacaoEstoque({ produto }) {
@@ -15,7 +16,60 @@ function SituacaoEstoque({ produto }) {
   );
 }
 
-export default function TabelaProdutos({ produtos }) {
+const BOTAO = "rounded-md px-2 py-1 text-xs font-medium";
+
+function Acoes({ produto, onEditar, onExcluir }) {
+  // A exclusão pede confirmação na própria linha, sem janelas do navegador.
+  const [confirmando, setConfirmando] = useState(false);
+
+  if (confirmando) {
+    return (
+      <div className="flex justify-end gap-1">
+        <span className="self-center text-xs text-slate-600">Excluir?</span>
+        <button
+          type="button"
+          onClick={() => {
+            setConfirmando(false);
+            onExcluir(produto);
+          }}
+          className={`${BOTAO} bg-red-600 text-white hover:bg-red-700`}
+        >
+          Sim
+        </button>
+        <button
+          type="button"
+          onClick={() => setConfirmando(false)}
+          className={`${BOTAO} border border-slate-300 hover:bg-slate-50`}
+        >
+          Não
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex justify-end gap-1">
+      <button
+        type="button"
+        onClick={() => onEditar(produto)}
+        aria-label={`Editar ${produto.nome}`}
+        className={`${BOTAO} border border-slate-300 hover:bg-slate-50`}
+      >
+        Editar
+      </button>
+      <button
+        type="button"
+        onClick={() => setConfirmando(true)}
+        aria-label={`Excluir ${produto.nome}`}
+        className={`${BOTAO} border border-red-200 text-red-700 hover:bg-red-50`}
+      >
+        Excluir
+      </button>
+    </div>
+  );
+}
+
+export default function TabelaProdutos({ produtos, onEditar, onExcluir }) {
   if (produtos.length === 0) {
     return (
       <p className="rounded-lg border border-dashed border-slate-300 bg-white p-8 text-center text-slate-500">
@@ -36,6 +90,7 @@ export default function TabelaProdutos({ produtos }) {
             <th className="px-4 py-3 text-right">Qtd.</th>
             <th className="px-4 py-3 text-right">Mín.</th>
             <th className="px-4 py-3">Situação</th>
+            <th className="px-4 py-3 text-right">Ações</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-slate-100">
@@ -49,6 +104,9 @@ export default function TabelaProdutos({ produtos }) {
               <td className="px-4 py-3 text-right text-slate-500">{produto.estoque_minimo}</td>
               <td className="px-4 py-3">
                 <SituacaoEstoque produto={produto} />
+              </td>
+              <td className="px-4 py-3">
+                <Acoes produto={produto} onEditar={onEditar} onExcluir={onExcluir} />
               </td>
             </tr>
           ))}
